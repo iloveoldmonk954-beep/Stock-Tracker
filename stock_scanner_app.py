@@ -241,6 +241,67 @@ st.info(f"**Market Sentiment:** {sentiment} (US Score: {us_score:+.2f}%)")
 # Main Scan
 st.header("📊 Stock Analysis")
 
+# Quick Stock Search Feature
+st.subheader("🔍 Quick Stock Search")
+
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    search_symbol = st.text_input(
+        "Enter stock symbol (e.g., SUZLON, RELIANCE, ADANIGREEN)", 
+        placeholder="Type symbol and press Enter..."
+    ).upper()
+
+with col2:
+    st.write("")  # Spacer
+    st.write("")  # Spacer
+    search_button = st.button("🔍 Analyze", use_container_width=True)
+
+if search_button and search_symbol:
+    with st.spinner(f"Analyzing {search_symbol}..."):
+        result = analyze_stock(search_symbol)
+        
+        if result:
+            st.success(f"✅ Analysis complete for {search_symbol}")
+            
+            # Display in a nice card
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Price", f"₹{result['Price']}")
+                st.metric("Score", f"{result['Score']}/10")
+            
+            with col2:
+                st.metric("Entry", f"₹{result['Entry']}")
+                st.metric("Target", f"₹{result['Target']}")
+            
+            with col3:
+                st.metric("Stop Loss", f"₹{result['SL']}")
+                st.metric("R:R", result['RR'])
+            
+            # Additional details
+            st.info(f"**Setup:** {result['Setup']} | **RSI:** {result['RSI']}")
+            
+            if result['Is_Defence']:
+                st.success("🛡️ This is a Defence sector stock!")
+            
+            st.caption(f"Signals: {result['Signals']}")
+            
+            # Calculate position sizing
+            shares_can_buy = int(5000 / result['Entry'])
+            potential_profit = (result['Target'] - result['Entry']) * shares_can_buy
+            max_loss = (result['Entry'] - result['SL']) * shares_can_buy
+            
+            st.markdown(f"""
+            **For ₹5,000 Capital:**
+            - Buy {shares_can_buy} shares at ₹{result['Entry']}
+            - Potential Profit: ₹{potential_profit:.0f}
+            - Max Risk: ₹{max_loss:.0f}
+            """)
+        else:
+            st.error(f"❌ Could not analyze {search_symbol}. Check if symbol is correct (must be NSE stock).")
+
+st.divider()
 if "scan_triggered" in st.session_state and st.session_state["scan_triggered"]:
     st.info("🔍 Scanning... This takes ~2 minutes")
 
